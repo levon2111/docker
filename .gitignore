@@ -6,4 +6,4 @@ migrate
 createsuperuser
 static/*
 *.log
-
+media/*

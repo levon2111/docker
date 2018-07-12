@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 PROJECT_APPS = [
     'apps.core',
     'apps.users',
+    'apps.docks',
 ]
 
 THIRD_PARTY_APPS = [

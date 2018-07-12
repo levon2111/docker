@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from apps.core.models import AbstractBaseModel
+from apps.docks.models import Company, Warehouse
 
 
 def get_file_path(instance, filename):
@@ -48,6 +49,15 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser, AbstractBaseModel):
+    ROLE_CHOICES = (
+        ('None', 'Without role'),
+        ('admin', 'Docker Admin'),
+        ('company', 'Company Admin'),
+        ('warehouse', 'Warehouse Admin'),
+        ('general', 'General User'),
+    )
+
+    role = models.CharField(choices=ROLE_CHOICES, max_length=32, default='None')
     username = models.CharField(
         blank=True,
         null=True,
@@ -63,10 +73,10 @@ class User(AbstractUser, AbstractBaseModel):
         null=True,
         max_length=255,
     )
-    image = models.ImageField(
-        upload_to=get_file_path,
-        null=True,
+    address = models.CharField(
         blank=True,
+        null=True,
+        max_length=255,
     )
     email = models.EmailField(unique=True)
     email_confirmation_token = models.CharField(
@@ -90,3 +100,32 @@ class User(AbstractUser, AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Users'
+
+
+class AdminUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'AdminUser: {0}'.format(self.user.email)
+
+
+class CompanyUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'CompanyUser: {0}'.format(self.user.email)
+
+    class Meta:
+        verbose_name_plural = 'Company User'
+
+
+class WarehouseUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'WarehouseUser: {0}'.format(self.user.email)
+
+    class Meta:
+        verbose_name_plural = 'Warehouse User'
