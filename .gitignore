@@ -1,0 +1,9 @@
+.idea/*
+*.pyc
+runserver
+makemigrations
+migrate
+createsuperuser
+static/*
+*.log
+

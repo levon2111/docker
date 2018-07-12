@@ -1,0 +1,19 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<br>
+Hi {{ name }}
+<br>
+<br>
+Welcome to Docker - The best online platform where you can find suitable, high-quality IT companies with qualified and experienced specialists to realize your projects at best.
+Please <a
+        href="{{ client_side_url }}/confirm-account/{{ token }}">activate</a> your account to be able to use its features fully.
+<br>
+<br>
+<br>
+<br>
+<br>
+With regards,<br>
+Docker team<br>
+
+{% endblock %}
