@@ -4,7 +4,8 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from apps.core.utils import generate_unique_key, send_email_job_registration
-from apps.users.models import User
+from apps.docks.models import InvitationToUserAndWarehouseAdmin
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser
 from apps.users.validators import check_valid_password
 
 
@@ -90,3 +91,53 @@ class ResetPasswordSerializer(serializers.Serializer):
     def check_valid_token(self):
         if not User.objects.filter(reset_key=self.context['reset_key']).exists():
             raise serializers.ValidationError('Token is not valid.')
+
+
+class SignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    first_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    last_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+    password = serializers.CharField()
+    repeat_password = serializers.CharField()
+
+    @staticmethod
+    def save_user(validated_data):
+        invitation = InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).first()
+        if invitation is not None:
+            user = User(email=validated_data['email'])
+            user.set_password(validated_data['password'])
+            user.first_name = validated_data['first_name']
+            user.last_name = validated_data['last_name']
+            user.is_staff = False
+            user.is_active = True
+            user.role = invitation.role
+            user.email_confirmation_token = generate_unique_key(user.email)
+            user.save()
+            if user.role == 'general':
+                company_general_user = CompanyUser(user=user, company=invitation.company)
+                company_general_user.save()
+            elif user.role == 'warehouse':
+                warehouse_admin = CompanyWarehouseAdmins(user=user, company=invitation.company)
+                warehouse_admin.save()
+            InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).delete()
+        else:
+            raise serializers.ValidationError({'detail': 'Invalid email'})
+
+    def validate(self, data):
+        check_valid_password(data)
+        self.check_valid_email(data['email'])
+
+        return data
+
+    @staticmethod
+    def check_valid_email(value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError({'detail': 'This email address already exists.'})
+
+        return value

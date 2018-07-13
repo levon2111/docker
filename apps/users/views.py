@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -8,7 +7,7 @@ from rest_framework.views import APIView
 
 from apps.users.models import User
 from apps.users.serializers import (
-    ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer)
+    ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer)
 
 
 class Login(ObtainAuthToken):
@@ -29,16 +28,13 @@ class Login(ObtainAuthToken):
             }, status=status.HTTP_412_PRECONDITION_FAILED)
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
-        image_user = ''
-        if user.image:
-            image_user = settings.BASE_URL + user.image.url
 
         return Response({
             'id': user.pk,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            'image': image_user,
             'email': user.email,
+            'role': user.role,
             'username': user.username,
             'token': token.key,
         })
@@ -126,4 +122,23 @@ class ConfirmAccountAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SignUpAPIView(APIView):
+    serializer_class = SignUpSerializer
+
+    def get_serializer(self):
+        return self.serializer_class()
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save_user(serializer.data)
+            return JsonResponse(
+                {
+                    'result': 'success',
+                },
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

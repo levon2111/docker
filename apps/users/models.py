@@ -42,6 +42,7 @@ class CustomUserManager(BaseUserManager):
             password=password,
         )
         user.is_active = True
+        user.role = 'admin'
         user.is_staff = True
         user.is_superuser = True
         user.save()
@@ -51,13 +52,13 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser, AbstractBaseModel):
     ROLE_CHOICES = (
         ('None', 'Without role'),
-        ('admin', 'Docker Admin'),
+        ('admin', 'Super Admin'),
         ('company', 'Company Admin'),
         ('warehouse', 'Warehouse Admin'),
         ('general', 'General User'),
     )
 
-    role = models.CharField(choices=ROLE_CHOICES, max_length=32, default='None')
+    role = models.CharField(choices=ROLE_CHOICES, max_length=32, default='company')
     username = models.CharField(
         blank=True,
         null=True,
@@ -109,6 +110,36 @@ class AdminUser(models.Model):
         return 'AdminUser: {0}'.format(self.user.email)
 
 
+class CompanyAdmins(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'CompanyAdmins: {0}'.format(self.user.email)
+
+    class Meta:
+        verbose_name_plural = 'Company Admin'
+
+
+class CompanyWarehouseAdmins(AbstractBaseModel):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'CompanyWarehouseAdmin: {0}'.format(self.user.email)
+
+
+class WarehouseManager(models.Model):
+    admin = models.ForeignKey(CompanyWarehouseAdmins, on_delete=models.CASCADE)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'WarehouseManager: {0}'.format(self.admin.user.email)
+
+    class Meta:
+        verbose_name_plural = 'Warehouse User'
+
+
 class CompanyUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
@@ -118,14 +149,3 @@ class CompanyUser(models.Model):
 
     class Meta:
         verbose_name_plural = 'Company User'
-
-
-class WarehouseUser(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return 'WarehouseUser: {0}'.format(self.user.email)
-
-    class Meta:
-        verbose_name_plural = 'Warehouse User'

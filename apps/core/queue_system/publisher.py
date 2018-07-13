@@ -3,18 +3,16 @@
 import json
 
 import pika
+from django.conf import settings as django_settings
 
 from . import settings
-from django.conf import settings as django_settings
 
 
 class BasePublisher(object):
-
     exchange_name = settings.QUEUE_SETTINGS['EXCHANGE_NAME']
     exchange_type = settings.QUEUE_SETTINGS['EXCHANGE_TYPE']
 
     def __init__(self, routing_key, body):
-
         self.body = body
         self.routing_key = routing_key
 
@@ -45,7 +43,8 @@ class BasePublisher(object):
         :return:
         """
         credentials = pika.PlainCredentials('docker_user', 'root')
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', virtual_host='docker', credentials=credentials))
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='localhost', virtual_host='docker', credentials=credentials))
         self.channel = self.connection.channel()
 
     def __exchange_declare(self):
@@ -54,4 +53,4 @@ class BasePublisher(object):
         :return:
         """
 
-        self.channel.exchange_declare(exchange=self.exchange_name, type=self.exchange_type)
+        self.channel.exchange_declare(exchange=self.exchange_name, exchange_type=self.exchange_type)

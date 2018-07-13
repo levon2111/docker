@@ -59,6 +59,7 @@ Set up supervisor (pm2)
     $ cd /var/www/subdomains/codebnb/docker_api/public_html
     $ pm2 startup ubuntu14
     $ pm2 start scripts/manage_codebnb_init_default_consumer.sh --name docker_api_init_default_consumer
+    $ pm2 start scripts/manage_codebnb_init_default_consumer.sh --name docker_api_init_default_consumer
     $ pm2 save
 
 More about pm2 is here https://github.com/Unitech/pm2

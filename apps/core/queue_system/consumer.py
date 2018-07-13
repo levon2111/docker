@@ -95,7 +95,7 @@ class BaseConsumer(object):
         :return:
         """
 
-        self.channel.exchange_declare(exchange=self.exchange_name, type=self.exchange_type)
+        self.channel.exchange_declare(exchange=self.exchange_name, exchange_type=self.exchange_type)
 
     def __queue_bind(self):
         """
@@ -109,4 +109,6 @@ class BaseConsumer(object):
             return
 
         for key in settings.ROUTING_KEYS[self.consumer_name]:
+            print(self.exchange_name)
+            print(self.queue_name)
             self.channel.queue_bind(exchange=self.exchange_name, queue=self.queue_name, routing_key=key)

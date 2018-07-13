@@ -16,7 +16,6 @@ import sys
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
@@ -29,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*', ]
 CLIENT_BASE_URL = 'http://docker-client.codebnb.me'
 
-DJANGO_CONFIGURATION="Development"
+DJANGO_CONFIGURATION = "Development"
 # Application definition
 
 INSTALLED_APPS = [
@@ -55,7 +54,6 @@ THIRD_PARTY_APPS = [
     'django_ses',
     'django_filters',
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -178,9 +176,9 @@ LOGGING = {
             'propagate': False,
         },
         'apps.user_messages': {
-                'handlers': ['mail_admins', 'file'],
-                'level': 'DEBUG',
-            }
+            'handlers': ['mail_admins', 'file'],
+            'level': 'DEBUG',
+        }
     }
 }
 
@@ -204,7 +202,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-
 BROKER_URL = 'amqp://guest:guest@localhost:5672'
 
 TESTING = sys.argv[1:2] == ['test']
@@ -213,8 +210,11 @@ LOGIN_URL = 'rest_framework:login'
 LOGOUT_URL = 'rest_framework:logout'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'sasun.antonyan.stdev@gmail.com'
+EMAIL_HOST_PASSWORD = '20033128001..1.'
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.mailgun.org'
-EMAIL_HOST_USER = 'postmaster@dined.codebnb.me'
-EMAIL_HOST_PASSWORD = 'e9fe03746b87bc87a03017cdc95a30ad'
-EMAIL_PORT = 2525
+
+SENDER_EMAIL = 'sasun.antonyan.stdev@gmail.com'

@@ -29,9 +29,13 @@ class Company(AbstractBaseModel):
 class Warehouse(AbstractBaseModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=False, blank=False)
-    open_date = models.DateTimeField()
-    close_date = models.DateTimeField()
+    open_date = models.TimeField()
+    close_date = models.TimeField()
     opened_overnight = models.BooleanField(default=False)
+
+    @property
+    def get_dock_count(self):
+        return Dock.objects.filter(warehouse=self.id).count()
 
     def __str__(self):
         return self.name
@@ -62,3 +66,26 @@ class BookedDock(AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Booked Dock'
+
+
+class InvitationToUserAndWarehouseAdmin(AbstractBaseModel):
+    ROLE_CHOICES = (
+        ('warehouse', 'Warehouse Admin'),
+        ('general', 'General User'),
+    )
+
+    first_name = models.CharField(max_length=255, null=False, blank=False)
+    last_name = models.CharField(max_length=255, null=False, blank=False)
+    email = models.EmailField(null=False, blank=False)
+    token = models.TextField(null=False, blank=False)
+    role = models.CharField(choices=ROLE_CHOICES, max_length=32, default='company')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    def get_full_name(self):
+        return '%s %s' % (self.first_name, self.last_name)
+
+    def __str__(self):
+        return '%s %s  Role: %s' % (self.first_name, self.last_name, self.role)
+
+    class Meta:
+        verbose_name_plural = 'Invitation To User And Warehouse Admin'
