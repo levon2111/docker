@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from apps.docks.filters import WarehouseFilter
 from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer
-from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins
+from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
 
 
 def get_user_company(user):
@@ -20,8 +20,8 @@ def get_user_company(user):
         company = CompanyWarehouseAdmins.objects.filter(user=user).first()
         return company.company if company is not None else None
     elif role == 'general':
-        # //Todo
-        pass
+        company = CompanyUser.objects.filter(user=user).first()
+        return company.company if company is not None else None
 
 
 class CompanyWarehouseViewSet(viewsets.ModelViewSet):

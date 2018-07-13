@@ -1,13 +1,29 @@
 from django.http import JsonResponse
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from apps.users.models import User
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser
 from apps.users.serializers import (
-    ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer)
+    ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
+    WarehouseAdminGetSerializer)
+
+
+def get_user_company(user):
+    role = user.role
+    if role == 'company':
+        company = CompanyAdmins.objects.filter(user=user).first()
+        return company.company if company is not None else None
+    elif role == 'warehouse':
+        company = CompanyWarehouseAdmins.objects.filter(user=user).first()
+        return company.company if company is not None else None
+    elif role == 'general':
+        company = CompanyUser.objects.filter(user=user).first()
+        return company.company if company is not None else None
 
 
 class Login(ObtainAuthToken):
@@ -31,6 +47,7 @@ class Login(ObtainAuthToken):
 
         return Response({
             'id': user.pk,
+            'address': user.address,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'email': user.email,
@@ -142,3 +159,26 @@ class SignUpAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
+    queryset = CompanyWarehouseAdmins.objects.all()
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('get',)
+    serializer_class = WarehouseAdminGetSerializer
+    filter_class = WarehouseAdminFilter
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
+
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        if company is not None:
+            return CompanyWarehouseAdmins.objects.filter(company=company)
+        return CompanyWarehouseAdmins.objects.all()
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'GET':
+            serializer_class = WarehouseAdminGetSerializer
+        else:
+            serializer_class = WarehouseAdminGetSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)

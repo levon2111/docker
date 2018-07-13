@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from apps.core.utils import generate_unique_key, send_email_job_registration
 from apps.docks.models import InvitationToUserAndWarehouseAdmin
+from apps.docks.serializers import CompanyGetSerializer
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser
 from apps.users.validators import check_valid_password
 
@@ -15,6 +16,20 @@ def base64_to_image(base64_string):
 
     base64_string = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)  # You can save this as file instance.
     return base64_string
+
+
+class UserGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'address',
+            'role',
+        ]
 
 
 class ForgotPasswordSerializer(serializers.Serializer):
@@ -141,3 +156,15 @@ class SignUpSerializer(serializers.Serializer):
             raise serializers.ValidationError({'detail': 'This email address already exists.'})
 
         return value
+
+
+class WarehouseAdminGetSerializer(serializers.ModelSerializer):
+    user = UserGetSerializer()
+    company = CompanyGetSerializer(read_only=True)
+
+    class Meta:
+        model = CompanyWarehouseAdmins
+        fields = [
+            'user',
+            'company',
+        ]
