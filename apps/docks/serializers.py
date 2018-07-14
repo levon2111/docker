@@ -2,8 +2,8 @@ from django.conf import settings
 from rest_framework import serializers
 
 from apps.core.utils import send_email_job_registration, generate_unique_key
-from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin
-from apps.users.models import User
+from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock
+from apps.users.models import User, CompanyWarehouseAdmins, WarehouseManager
 
 
 class CompanyGetSerializer(serializers.ModelSerializer):
@@ -21,6 +21,16 @@ class CompanyGetSerializer(serializers.ModelSerializer):
         ]
 
 
+class WarehouseManagerGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WarehouseManager
+        fields = [
+            'id',
+            'admin',
+            'warehouse'
+        ]
+
+
 class WarehouseGetSerializer(serializers.ModelSerializer):
     docks_count = serializers.ReadOnlyField(source='get_dock_count')
     company = CompanyGetSerializer(read_only=True)
@@ -35,6 +45,17 @@ class WarehouseGetSerializer(serializers.ModelSerializer):
             'close_date',
             'opened_overnight',
             'docks_count',
+        ]
+
+
+class WarehousePostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Warehouse
+        fields = [
+            'name',
+            'open_date',
+            'close_date',
+            'opened_overnight',
         ]
 
 
@@ -78,3 +99,92 @@ class InviteUserOrWarehouseAdminSerializer(serializers.Serializer):
             raise serializers.ValidationError('This email address is already exist.')
 
         return value
+
+
+class DockCreateSerializer(serializers.ModelSerializer):
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all(),
+        allow_empty=False,
+        allow_null=False
+    )
+
+    class Meta:
+        model = Dock
+        fields = [
+            'warehouse',
+            'name',
+        ]
+
+
+class DockGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dock
+        fields = [
+            'warehouse',
+            'name',
+        ]
+
+
+class CreateWarehouseSerializer(serializers.ModelSerializer):
+    warehouse_admins = serializers.ListField(required=True)
+    docks = serializers.ListField(required=True)
+
+    def save(self, validated_data):
+        warehouse = Warehouse(
+            company=self.context['company'],
+            name=validated_data['name'],
+            open_date=validated_data['open_date'],
+            close_date=validated_data['close_date'],
+            opened_overnight=validated_data['opened_overnight']
+        )
+        warehouse.save()
+        new_docks = []
+        for x in validated_data['docks']:
+            exists = Dock.objects.filter(warehouse=warehouse, name=x).first()
+            if exists is not None:
+                raise serializers.ValidationError({'detail': "Warehouse and dock name combination must be unique."})
+            new_dock = Dock(warehouse=warehouse, name=x)
+            new_docks.append(new_dock)
+
+        new_managers = []
+        for x in validated_data['warehouse_admins']:
+            new_manager = WarehouseManager(admin=CompanyWarehouseAdmins.objects.get(pk=int(x)), warehouse=warehouse)
+            new_managers.append(new_manager)
+
+        for x in new_docks:
+            x.save()
+        for x in new_managers:
+            x.save()
+
+        return {'warehouse': warehouse, 'docks': new_docks, 'admins': new_managers}
+
+    def validate(self, attrs):
+        warehouse_admins_array = attrs['warehouse_admins']
+        for x in warehouse_admins_array:
+            existing_company_warehouse_admin = CompanyWarehouseAdmins.objects.filter(
+                pk=int(x),
+                company=self.context['company']
+            ).first()
+            if existing_company_warehouse_admin is None:
+                raise serializers.ValidationError({'detail': 'Warehouse Admin Not Found'})
+
+        warehouse_docks = attrs['docks']
+        for x in warehouse_docks:
+            if not x:
+                raise serializers.ValidationError({'detail': 'dock name is not valid'})
+
+        exists_combination = Warehouse.objects.filter(company=self.context['company'], name=attrs['name']).first()
+        if exists_combination is not None:
+            raise serializers.ValidationError({'detail': 'Warehouse company and name must be unique combination.'})
+        return attrs
+
+    class Meta:
+        model = Warehouse
+        fields = [
+            'docks',
+            'warehouse_admins',
+            'name',
+            'open_date',
+            'close_date',
+            'opened_overnight',
+        ]

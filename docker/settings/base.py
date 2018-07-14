@@ -174,10 +174,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
-        },
-        'apps.user_messages': {
-            'handlers': ['mail_admins', 'file'],
-            'level': 'DEBUG',
         }
     }
 }

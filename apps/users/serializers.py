@@ -110,14 +110,6 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    first_name = serializers.CharField(
-        required=False,
-        allow_blank=True,
-    )
-    last_name = serializers.CharField(
-        required=False,
-        allow_blank=True,
-    )
     password = serializers.CharField()
     repeat_password = serializers.CharField()
 
@@ -127,8 +119,8 @@ class SignUpSerializer(serializers.Serializer):
         if invitation is not None:
             user = User(email=validated_data['email'])
             user.set_password(validated_data['password'])
-            user.first_name = validated_data['first_name']
-            user.last_name = validated_data['last_name']
+            user.first_name = invitation.first_name
+            user.last_name = invitation.last_name
             user.is_staff = False
             user.is_active = True
             user.role = invitation.role

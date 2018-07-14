@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
+from apps.users.filters import WarehouseAdminFilter
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,

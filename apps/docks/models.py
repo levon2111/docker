@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.db import models
 
 from apps.core.models import AbstractBaseModel
@@ -42,6 +43,7 @@ class Warehouse(AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Warehouse'
+        unique_together = (("company", "name"),)
 
 
 class Dock(AbstractBaseModel):
@@ -53,6 +55,7 @@ class Dock(AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Dock'
+        unique_together = (("warehouse", "name"),)
 
 
 class BookedDock(AbstractBaseModel):

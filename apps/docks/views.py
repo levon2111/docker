@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 
 from apps.docks.filters import WarehouseFilter
 from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin
-from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer
+from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
+    CreateWarehouseSerializer, WarehousePostSerializer
 from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
 
 
@@ -27,8 +28,8 @@ def get_user_company(user):
 class CompanyWarehouseViewSet(viewsets.ModelViewSet):
     queryset = Warehouse.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get',)
-    serializer_class = WarehouseGetSerializer
+    http_method_names = ('get', 'delete', 'put', 'patch', )
+    serializer_class = WarehousePostSerializer
     filter_class = WarehouseFilter
     search_fields = ('name',)
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
@@ -50,7 +51,7 @@ class CompanyWarehouseViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             serializer_class = WarehouseGetSerializer
         else:
-            serializer_class = WarehouseGetSerializer
+            serializer_class = WarehousePostSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
@@ -95,3 +96,26 @@ class AcceptInvitationAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response({'detail': 'Invalid Token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateWarehouseAPIView(APIView):
+    serializer_class = CreateWarehouseSerializer
+
+    def get_serializer(self):
+        return self.serializer_class()
+
+    def post(self, request):
+        company = get_user_company(request.user)
+        if company is not None:
+            serializer = self.serializer_class(data=request.data, context={'company': company})
+            if serializer.is_valid():
+                new_warehouse = serializer.save(serializer.data)
+                return JsonResponse(
+                    {
+                        'result': WarehouseGetSerializer(new_warehouse['warehouse']).data,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)

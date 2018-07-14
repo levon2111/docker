@@ -32,7 +32,7 @@ Add these to your bashrc virutualenvwrapper work
 
 Create virtualenv
 
-    cd /var/envs && mkvirtualenv --python=/usr/bin/python docker
+    cd /var/envs && mkvirtualenv --python=python3 docker
 
 
 Install requirements for a project.
@@ -44,11 +44,12 @@ Install requirements for a project.
 ###For psql
 
     sudo su - postgres
-    psql > DROP DATABASE IF EXISTS docker;
-    psql > CREATE DATABASE docker;
-    psql > CREATE USER docker_user WITH password 'root';
-    psql > GRANT ALL privileges ON DATABASE docker TO docker_user;
-    psql > ALTER USER docker_user CREATEDB;
+    psql
+    DROP DATABASE IF EXISTS docker;
+    CREATE DATABASE docker;
+    CREATE USER docker_user WITH password 'root';
+    GRANT ALL privileges ON DATABASE docker TO docker_user;
+    ALTER USER docker_user CREATEDB;
 
     
 Set up supervisor (pm2)
