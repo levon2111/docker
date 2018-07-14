@@ -4,9 +4,9 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from apps.core.utils import generate_unique_key, send_email_job_registration
-from apps.docks.models import InvitationToUserAndWarehouseAdmin
+from apps.docks.models import InvitationToUserAndWarehouseAdmin, Warehouse
 from apps.docks.serializers import CompanyGetSerializer
-from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser, WarehouseManager
 from apps.users.validators import check_valid_password
 
 
@@ -157,6 +157,35 @@ class WarehouseAdminGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyWarehouseAdmins
         fields = [
+            'id',
             'user',
             'company',
+        ]
+
+
+class WarehouseManagerSerializer(serializers.ModelSerializer):
+    admin = serializers.PrimaryKeyRelatedField(
+        queryset=CompanyWarehouseAdmins.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    id = serializers.ReadOnlyField()
+
+    def validate(self, attrs):
+        manager = WarehouseManager.objects.filter(admin=attrs['admin'], warehouse=attrs['warehouse']).first()
+        if manager is not None:
+            raise serializers.ValidationError({'detail': 'The admin and warehouse combination already exist.'})
+        return attrs
+
+    class Meta:
+        model = WarehouseManager
+        fields = [
+            'id',
+            'admin',
+            'warehouse',
         ]

@@ -188,3 +188,30 @@ class CreateWarehouseSerializer(serializers.ModelSerializer):
             'close_date',
             'opened_overnight',
         ]
+
+
+class DockModelSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False)
+    warehouse = serializers.PrimaryKeyRelatedField(
+        queryset=Warehouse.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    id = serializers.ReadOnlyField()
+
+    def validate(self, attrs):
+        if attrs['warehouse'].company != self.context['company']:
+            raise serializers.ValidationError({'detail': 'Current company have not that warehouse.'})
+
+        exists = Dock.objects.filter(name=attrs['name'], warehouse=attrs['warehouse']).first()
+        if exists is not None:
+            raise serializers.ValidationError({'detail': 'Warehouse already have that dock.'})
+        return attrs
+
+    class Meta:
+        model = Dock
+        fields = [
+            'id',
+            'name',
+            'warehouse',
+        ]

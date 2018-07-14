@@ -6,9 +6,9 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from apps.docks.filters import WarehouseFilter
-from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
-    CreateWarehouseSerializer, WarehousePostSerializer
+    CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer
 from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
 
 
@@ -28,24 +28,15 @@ def get_user_company(user):
 class CompanyWarehouseViewSet(viewsets.ModelViewSet):
     queryset = Warehouse.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get', 'delete', 'put', 'patch', )
+    http_method_names = ('get', 'delete', 'put', 'patch',)
     serializer_class = WarehousePostSerializer
     filter_class = WarehouseFilter
     search_fields = ('name',)
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
 
     def get_queryset(self):
-        role = self.request.user.role
-        if role not in ['admin', 'general', 'None']:
-            if role == 'company':
-                company = CompanyAdmins.objects.filter(user=self.request.user).first()
-                if company is not None:
-                    return Warehouse.objects.filter(company=company.company)
-            elif role == 'warehouse':
-                company = CompanyWarehouseAdmins.objects.filter(user=self.request.user).first()
-                if company is not None:
-                    return Warehouse.objects.filter(company=company.company)
-        return Warehouse.objects.all()
+        company = get_user_company(self.request.user)
+        return Warehouse.objects.filter(company=company)
 
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'GET':
@@ -119,3 +110,21 @@ class CreateWarehouseAPIView(APIView):
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DockModelViewSet(viewsets.ModelViewSet):
+    queryset = Dock.objects.all()
+    serializer_class = DockModelSerializer
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('post', 'get', 'put', 'patch', 'delete')
+
+    def get_serializer_context(self):
+        context = super(DockModelViewSet, self).get_serializer_context()
+        context.update({
+            "company": get_user_company(self.request.user)
+        })
+        return context
+
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        return Dock.objects.filter(warehouse__company=company)

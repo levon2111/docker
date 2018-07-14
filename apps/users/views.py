@@ -7,11 +7,11 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from apps.users.filters import WarehouseAdminFilter
-from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser
+from apps.users.filters import WarehouseAdminFilter, WarehouseManagerFilter
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser, WarehouseManager
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
-    WarehouseAdminGetSerializer)
+    WarehouseAdminGetSerializer, WarehouseManagerSerializer)
 
 
 def get_user_company(user):
@@ -183,3 +183,16 @@ class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
             serializer_class = WarehouseAdminGetSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
+
+
+class WarehouseManagerViewSet(viewsets.ModelViewSet):
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        return WarehouseManager.objects.filter(admin__company=company)
+
+    queryset = WarehouseManager.objects.all()
+    serializer_class = WarehouseManagerSerializer
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('post', 'delete', 'get',)
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
+    filter_class = WarehouseManagerFilter

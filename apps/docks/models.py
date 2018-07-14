@@ -55,7 +55,6 @@ class Dock(AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Dock'
-        unique_together = (("warehouse", "name"),)
 
 
 class BookedDock(AbstractBaseModel):

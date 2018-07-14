@@ -2,7 +2,7 @@ import django_filters
 import rest_framework_filters as filters
 
 from apps.core.filters import BaseFilter
-from apps.users.models import CompanyWarehouseAdmins
+from apps.users.models import CompanyWarehouseAdmins, WarehouseManager
 
 
 class WarehouseAdminFilter(filters.FilterSet, BaseFilter):
@@ -17,4 +17,15 @@ class WarehouseAdminFilter(filters.FilterSet, BaseFilter):
 
     class Meta:
         model = CompanyWarehouseAdmins
+        fields = {}
+
+
+class WarehouseManagerFilter(filters.FilterSet, BaseFilter):
+    warehouse = django_filters.CharFilter(method='filter_by_warehouse')
+
+    def filter_by_warehouse(self, queryset, name, value):
+        return queryset.filter(warehouse=value)
+
+    class Meta:
+        model = WarehouseManager
         fields = {}
