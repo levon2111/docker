@@ -6,9 +6,9 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from apps.docks.filters import WarehouseFilter
-from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
-    CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer
+    CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer, CompanySerializer
 from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
 
 
@@ -129,3 +129,10 @@ class DockModelViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         company = get_user_company(self.request.user)
         return Dock.objects.filter(warehouse__company=company)
+
+
+class CompanyModelViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ('get', 'put', 'patch')

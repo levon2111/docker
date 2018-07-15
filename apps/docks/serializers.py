@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
+from apps.core.serializer_fields import Base64ImageField
 from apps.core.utils import send_email_job_registration, generate_unique_key
 from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock
 from apps.users.models import User, CompanyWarehouseAdmins, WarehouseManager
@@ -233,4 +234,16 @@ class DockModelSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'warehouse',
+        ]
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False)
+    image = Base64ImageField(allow_null=True, allow_empty_file=False)
+
+    class Meta:
+        model = Company
+        fields = [
+           'name',
+           'image',
         ]
