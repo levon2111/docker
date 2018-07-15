@@ -263,3 +263,26 @@ class CompanyUserPostSerializer(serializers.Serializer):
             'user',
             'company',
         ]
+
+
+class UserPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'first_name',
+            'last_name',
+            'username',
+            'is_active',
+            'address',
+        ]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, min_length=8)
+    new_password = serializers.CharField(required=True, min_length=8)
+    new_password_confirm = serializers.CharField(required=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({'detail': 'new password and confirmation non match'})
+        return attrs

@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -12,7 +13,7 @@ from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, Compa
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
     WarehouseAdminGetSerializer, WarehouseManagerSerializer, GetCompanyAllUserSerializer, WarehouseAdminPostSerilizer,
-    CompanyUserPostSerializer, CompanyUserGetSerializer)
+    CompanyUserPostSerializer, CompanyUserGetSerializer, UserPostSerializer, ChangePasswordSerializer)
 
 
 def get_user_company(user):
@@ -166,7 +167,7 @@ class SignUpAPIView(APIView):
 class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
     queryset = CompanyWarehouseAdmins.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get', )
+    http_method_names = ('get',)
     serializer_class = WarehouseAdminPostSerilizer
     filter_class = WarehouseAdminFilter
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
@@ -214,7 +215,7 @@ class GetCompanyUsersAPIView(APIView):
 class CompanyUserViewSet(viewsets.ModelViewSet):
     queryset = CompanyUser.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get', )
+    http_method_names = ('get',)
     serializer_class = CompanyUserPostSerializer
     # filter_class = WarehouseAdminFilter
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
@@ -232,3 +233,25 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
             serializer_class = CompanyUserPostSerializer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('delete', 'put', 'patch')
+    serializer_class = UserPostSerializer
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
+
+    @action(methods=['patch'], detail=True, permission_classes=[],
+            serializer_class=ChangePasswordSerializer)
+    def change_password(self, request, pk=None):
+        user = self.get_object()
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            if not user.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(serializer.data['new_password'])
+            user.save()
+            return Response("Success.", status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
