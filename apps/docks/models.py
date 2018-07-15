@@ -62,6 +62,8 @@ class BookedDock(AbstractBaseModel):
 
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    po_number = models.CharField(max_length=255, null=False, blank=False)
+    truck_number = models.CharField(max_length=255, null=False, blank=False)
 
     def __str__(self):
         return self.dock.name

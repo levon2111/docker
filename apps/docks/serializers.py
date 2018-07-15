@@ -257,6 +257,8 @@ class BookedDockGetSerializer(serializers.ModelSerializer):
             'dock',
             'start_date',
             'end_date',
+            'po_number',
+            'truck_number',
         )
 
 
@@ -291,4 +293,6 @@ class BookedDockCreateSerializer(serializers.ModelSerializer):
             'dock',
             'start_date',
             'end_date',
+            'po_number',
+            'truck_number',
         )
