@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from apps.docks.filters import WarehouseFilter
-from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company
+from apps.docks.filters import WarehouseFilter, BookedDockFilter
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company, BookedDock
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
-    CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer, CompanySerializer
+    CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer, CompanySerializer, \
+    BookedDockCreateSerializer, BookedDockGetSerializer
 from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
 
 
@@ -136,3 +137,25 @@ class CompanyModelViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ('get', 'put', 'patch')
+
+
+class BookedDockViewSet(viewsets.ModelViewSet):
+    queryset = BookedDock.objects.all()
+    serializer_class = BookedDockCreateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ('get', 'post', 'delete', 'put', 'patch')
+    filter_class = BookedDockFilter
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'GET':
+            serializer_class = BookedDockGetSerializer
+        else:
+            serializer_class = BookedDockCreateSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
+
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        if company is not None:
+            return BookedDock.objects.filter(dock__warehouse__company=company)
+        return BookedDock.objects.all()

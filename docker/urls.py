@@ -7,7 +7,7 @@ from rest_framework_swagger.views import get_swagger_view
 
 from apps.core.urls import generate_url
 from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet, \
-    InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView, CompanyModelViewSet
+    InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView, CompanyModelViewSet, BookedDockViewSet
 from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet, GetCompanyUsersAPIView, \
     CompanyUserViewSet, UserViewSet
 
@@ -21,6 +21,7 @@ router.register(r'company-user', CompanyUserViewSet, base_name='company-user')
 router.register(r'dock', DockModelViewSet, base_name='dock')
 router.register(r'users', UserViewSet, base_name='users')
 router.register(r'company', CompanyModelViewSet, base_name='company')
+router.register(r'booked-dock', BookedDockViewSet, base_name='booked-dock')
 
 urlpatterns = [
     url(r'^$', schema_view),

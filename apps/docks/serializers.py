@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.core.serializer_fields import Base64ImageField
 from apps.core.utils import send_email_job_registration, generate_unique_key
-from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock
+from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock, BookedDock
 from apps.users.models import User, CompanyWarehouseAdmins, WarehouseManager
 
 
@@ -244,6 +244,51 @@ class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = [
-           'name',
-           'image',
+            'name',
+            'image',
         ]
+
+
+class BookedDockGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookedDock
+        fields = (
+            'id',
+            'dock',
+            'start_date',
+            'end_date',
+        )
+
+
+class BookedDockCreateSerializer(serializers.ModelSerializer):
+    dock = serializers.PrimaryKeyRelatedField(
+        queryset=Dock.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    id = serializers.ReadOnlyField()
+
+    def validate(self, attrs):
+        existing = BookedDock.objects.filter(dock=attrs['dock'])
+        if attrs['start_date'] >= attrs['end_date']:
+            raise serializers.ValidationError({'detail': 'Wrong date range.'})
+        if existing.first() is not None:
+            for x in existing:
+                if attrs['start_date'] >= x.start_date and attrs['start_date'] <= x.end_date:
+                    raise serializers.ValidationError({'detail': 'Dock is booked in selected range.'})
+                if attrs['end_date'] >= x.start_date and attrs['end_date'] <= x.end_date:
+                    raise serializers.ValidationError({'detail': 'Dock is booked in selected range.'})
+                if attrs['start_date'] <= x.start_date and attrs['end_date'] >= x.end_date:
+                    raise serializers.ValidationError({'detail': 'Dock is booked in selected range.'})
+        return attrs
+
+    class Meta:
+        model = BookedDock
+        fields = (
+            'id',
+            'dock',
+            'start_date',
+            'end_date',
+        )
