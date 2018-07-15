@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from apps.core.utils import generate_unique_key, send_email_job_registration
-from apps.docks.models import Warehouse
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Company
 from apps.docks.serializers import CompanyGetSerializer
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser, WarehouseManager
 from apps.users.validators import check_valid_password
@@ -163,6 +163,28 @@ class WarehouseAdminGetSerializer(serializers.ModelSerializer):
         ]
 
 
+class WarehouseAdminPostSerilizer(serializers.ModelSerializer):
+    company = serializers.PrimaryKeyRelatedField(
+        queryset=Company.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CompanyWarehouseAdmins
+        fields = [
+            'id',
+            'company',
+            'user',
+        ]
+
+
 class WarehouseManagerSerializer(serializers.ModelSerializer):
     admin = serializers.PrimaryKeyRelatedField(
         queryset=CompanyWarehouseAdmins.objects.all(),
@@ -202,3 +224,20 @@ class WarehouseManagerGetSerializer(serializers.ModelSerializer):
             'admin',
             'warehouse',
         ]
+
+
+class CompanyUserGetSerializer(serializers.ModelSerializer):
+    user = UserGetSerializer()
+
+    class Meta:
+        model = CompanyUser
+        fields = [
+            'id',
+            'company',
+            'user',
+        ]
+
+
+class GetCompanyAllUserSerializer(serializers.Serializer):
+    warehouse_admins = WarehouseAdminGetSerializer(many=True)
+    company_users = WarehouseAdminGetSerializer(many=True)

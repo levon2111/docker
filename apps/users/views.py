@@ -11,7 +11,7 @@ from apps.users.filters import WarehouseAdminFilter, WarehouseManagerFilter
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser, WarehouseManager
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
-    WarehouseAdminGetSerializer, WarehouseManagerSerializer)
+    WarehouseAdminGetSerializer, WarehouseManagerSerializer, GetCompanyAllUserSerializer, WarehouseAdminPostSerilizer)
 
 
 def get_user_company(user):
@@ -165,8 +165,8 @@ class SignUpAPIView(APIView):
 class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
     queryset = CompanyWarehouseAdmins.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get',)
-    serializer_class = WarehouseAdminGetSerializer
+    http_method_names = ('get', 'delete')
+    serializer_class = WarehouseAdminPostSerilizer
     filter_class = WarehouseAdminFilter
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
 
@@ -180,7 +180,7 @@ class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
         if self.request.method == 'GET':
             serializer_class = WarehouseAdminGetSerializer
         else:
-            serializer_class = WarehouseAdminGetSerializer
+            serializer_class = WarehouseAdminPostSerilizer
         kwargs['context'] = self.get_serializer_context()
         return serializer_class(*args, **kwargs)
 
@@ -196,3 +196,17 @@ class WarehouseManagerViewSet(viewsets.ModelViewSet):
     http_method_names = ('post', 'delete', 'get',)
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
     filter_class = WarehouseManagerFilter
+
+
+class GetCompanyUsersAPIView(APIView):
+    permission_classes = [IsAuthenticated, ]
+
+    def get(self, request):
+        company = get_user_company(self.request.user)
+        warehouse_admins = CompanyWarehouseAdmins.objects.filter(company=company)
+        company_users = CompanyUser.objects.filter(company=company)
+        response = GetCompanyAllUserSerializer({'warehouse_admins': warehouse_admins, 'company_users': company_users})
+        print(warehouse_admins, company_users)
+        return Response(response.data, status=status.HTTP_200_OK)
+
+
