@@ -21,24 +21,43 @@ class CompanyGetSerializer(serializers.ModelSerializer):
         ]
 
 
-class WarehouseManagerGetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WarehouseManager
-        fields = [
-            'id',
-            'admin',
-            'warehouse'
-        ]
-
-
 class WarehouseGetSerializer(serializers.ModelSerializer):
+    def get_warehouse_managers(self, obj):
+        manangers = WarehouseManager.objects.filter(warehouse__id=obj.id)
+        mans = []
+        for x in manangers:
+            mans.append(
+                {
+                    'company_admin': {
+                        'id': x.admin.id,
+                        'name': x.admin.user.get_full_name(),
+                    },
+                    'manager_id': x.id
+                }
+            )
+        return mans
+
+    def get_warehouse_docks(self, obj):
+        docks = Dock.objects.filter(warehouse__id=obj.id)
+        new = []
+        for x in docks:
+            new.append({
+                'id': x.id,
+                'name': x.name,
+            })
+        return new
+
     docks_count = serializers.ReadOnlyField(source='get_dock_count')
     company = CompanyGetSerializer(read_only=True)
+    warehouse_managers = serializers.SerializerMethodField()
+    warehouse_docks = serializers.SerializerMethodField()
 
     class Meta:
         model = Warehouse
         fields = [
             'id',
+            'warehouse_managers',
+            'warehouse_docks',
             'company',
             'name',
             'open_date',

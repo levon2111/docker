@@ -6,7 +6,8 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_swagger.views import get_swagger_view
 
 from apps.core.urls import generate_url
-from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet
+from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet, \
+    InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView
 from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet
 
 schema_view = get_swagger_view(title='Docker API')
@@ -24,6 +25,9 @@ urlpatterns = [
     generate_url('dock/', include('apps.docks.urls')),
     url(r'^', include(router.urls)),
     url(r'create-warehouse/', CreateWarehouseAPIView.as_view(), name='create-warehouse'),
+    url(r'invite-user-warehouse/', InviteUserOrWarehouseAdminAPIView.as_view(),
+        name='invite-user-warehouse'),
+    url(r'accept-invitations/(?P<token>\w+)/$', AcceptInvitationAPIView.as_view(), name='accept-invitations'),
     url(r'^admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

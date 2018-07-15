@@ -91,6 +91,7 @@ class AcceptInvitationAPIView(APIView):
 
 class CreateWarehouseAPIView(APIView):
     serializer_class = CreateWarehouseSerializer
+    permission_classes = [IsAuthenticated, ]
 
     def get_serializer(self):
         return self.serializer_class()
