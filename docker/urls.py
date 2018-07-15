@@ -8,7 +8,8 @@ from rest_framework_swagger.views import get_swagger_view
 from apps.core.urls import generate_url
 from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet, \
     InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView
-from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet, GetCompanyUsersAPIView
+from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet, GetCompanyUsersAPIView, \
+    CompanyUserViewSet
 
 schema_view = get_swagger_view(title='Docker API')
 
@@ -16,6 +17,7 @@ router = DefaultRouter()
 router.register(r'warehouse', CompanyWarehouseViewSet, base_name='warehouse')
 router.register(r'warehouse-manager', WarehouseManagerViewSet, base_name='warehouse-manager')
 router.register(r'company-warehouse-admin', CompanyWarehouseAdminViewSet, base_name='company-warehouse-admin')
+router.register(r'company-user', CompanyUserViewSet, base_name='company-user')
 router.register(r'dock', DockModelViewSet, base_name='dock')
 
 urlpatterns = [
@@ -28,7 +30,7 @@ urlpatterns = [
     url(r'invite-user-warehouse/', InviteUserOrWarehouseAdminAPIView.as_view(),
         name='invite-user-warehouse'),
     url(r'accept-invitations/(?P<token>\w+)/$', AcceptInvitationAPIView.as_view(), name='accept-invitations'),
-    url(r'get-company-users/', GetCompanyUsersAPIView.as_view(), name='get-company-users'),
+    url(r'get-company-all-users/', GetCompanyUsersAPIView.as_view(), name='get-company-all-users'),
     url(r'^admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

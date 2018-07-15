@@ -11,7 +11,8 @@ from apps.users.filters import WarehouseAdminFilter, WarehouseManagerFilter
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser, WarehouseManager
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
-    WarehouseAdminGetSerializer, WarehouseManagerSerializer, GetCompanyAllUserSerializer, WarehouseAdminPostSerilizer)
+    WarehouseAdminGetSerializer, WarehouseManagerSerializer, GetCompanyAllUserSerializer, WarehouseAdminPostSerilizer,
+    CompanyUserPostSerializer, CompanyUserGetSerializer)
 
 
 def get_user_company(user):
@@ -165,7 +166,7 @@ class SignUpAPIView(APIView):
 class CompanyWarehouseAdminViewSet(viewsets.ModelViewSet):
     queryset = CompanyWarehouseAdmins.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('get', 'delete')
+    http_method_names = ('get', )
     serializer_class = WarehouseAdminPostSerilizer
     filter_class = WarehouseAdminFilter
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
@@ -210,3 +211,24 @@ class GetCompanyUsersAPIView(APIView):
         return Response(response.data, status=status.HTTP_200_OK)
 
 
+class CompanyUserViewSet(viewsets.ModelViewSet):
+    queryset = CompanyUser.objects.all()
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('get', )
+    serializer_class = CompanyUserPostSerializer
+    # filter_class = WarehouseAdminFilter
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
+
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        if company is not None:
+            return CompanyUser.objects.filter(company=company)
+        return CompanyUser.objects.all()
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'GET':
+            serializer_class = CompanyUserGetSerializer
+        else:
+            serializer_class = CompanyUserPostSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)

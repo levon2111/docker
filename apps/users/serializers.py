@@ -240,4 +240,26 @@ class CompanyUserGetSerializer(serializers.ModelSerializer):
 
 class GetCompanyAllUserSerializer(serializers.Serializer):
     warehouse_admins = WarehouseAdminGetSerializer(many=True)
-    company_users = WarehouseAdminGetSerializer(many=True)
+    company_users = CompanyUserGetSerializer(many=True)
+
+
+class CompanyUserPostSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    company = serializers.PrimaryKeyRelatedField(
+        queryset=Company.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+
+    class Meta:
+        model = CompanyUser
+        fields = [
+            'id',
+            'user',
+            'company',
+        ]
