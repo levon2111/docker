@@ -274,6 +274,7 @@ class UserPostSerializer(serializers.ModelSerializer):
             'username',
             'is_active',
             'address',
+            'email',
         ]
 
 
