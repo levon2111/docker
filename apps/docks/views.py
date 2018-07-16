@@ -62,7 +62,7 @@ class InviteUserOrWarehouseAdminAPIView(APIView):
 
             company = get_user_company(request.user)
             if company is not None:
-                serializer = self.serializer_class(data=request.data, context={'company': company})
+                serializer = self.serializer_class(data=request.data, context={'company': company, 'user': request.user})
 
                 if serializer.is_valid():
                     serializer.send_mail(serializer.data)

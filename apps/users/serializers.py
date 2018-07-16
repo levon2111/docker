@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 
 from apps.core.utils import generate_unique_key, send_email_job_registration
-from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Company
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Company, WarehouseAdminNotifications
 from apps.docks.serializers import CompanyGetSerializer
 from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser, WarehouseManager, CompanyAdminsNotification
 from apps.users.validators import check_valid_password
@@ -134,6 +134,11 @@ class SignUpSerializer(serializers.Serializer):
                 warehouse_admin.save()
             msg = "%s %s (%s) accepted your invitation." % (
                 invitation.first_name, invitation.first_name, invitation.role)
+            from_invited_user = User.objects.filter(pk=invitation.user).first()
+            print(from_invited_user)
+            if from_invited_user.role == 'warehouse':
+                notif = WarehouseAdminNotifications(user=from_invited_user.id, text=msg, seen=False)
+                notif.save()
             notification = CompanyAdminsNotification(company=invitation.company, text=msg)
             notification.save()
             InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).delete()

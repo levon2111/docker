@@ -94,6 +94,7 @@ class InviteUserOrWarehouseAdminSerializer(serializers.Serializer):
             last_name=validated_data['last_name'],
             email=validated_data['email'],
             company=self.context['company'],
+            user=self.context['user'].id,
         )
         send_email_job_registration(
             'Docker',
