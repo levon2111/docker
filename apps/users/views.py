@@ -240,7 +240,7 @@ class CompanyUserViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = [IsAuthenticated, ]
-    http_method_names = ('delete', 'put', 'patch')
+    http_method_names = ('delete', 'put', 'patch', 'get',)
     serializer_class = UserPostSerializer
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
 

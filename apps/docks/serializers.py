@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from apps.core.serializer_fields import Base64ImageField
 from apps.core.utils import send_email_job_registration, generate_unique_key
-from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock, BookedDock
+from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock, BookedDock, \
+    RequestedBookedDockChanges, WarehouseAdminNotifications
 from apps.users.models import User, CompanyWarehouseAdmins, WarehouseManager
 
 
@@ -284,6 +285,7 @@ class BookedDockCreateSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({'detail': 'Dock is booked in selected range.'})
                 if attrs['start_date'] <= x.start_date and attrs['end_date'] >= x.end_date:
                     raise serializers.ValidationError({'detail': 'Dock is booked in selected range.'})
+        attrs['user'] = self.context['user'].id
         return attrs
 
     class Meta:
@@ -296,3 +298,113 @@ class BookedDockCreateSerializer(serializers.ModelSerializer):
             'po_number',
             'truck_number',
         )
+
+
+class RequestedBookedDockChangesSerializer(serializers.ModelSerializer):
+    booked_dock = serializers.PrimaryKeyRelatedField(
+        queryset=BookedDock.objects.all(),
+        allow_null=False,
+        allow_empty=False,
+    )
+    dock_from = serializers.PrimaryKeyRelatedField(
+        queryset=Dock.objects.all(),
+        allow_null=True,
+        allow_empty=False,
+    )
+    dock_to = serializers.PrimaryKeyRelatedField(
+        queryset=Dock.objects.all(),
+        allow_null=True,
+        allow_empty=False,
+    )
+    new_start_date = serializers.DateTimeField(allow_null=True)
+    new_end_date = serializers.DateTimeField(allow_null=True)
+    old_start_date = serializers.DateTimeField(allow_null=True)
+    old_end_date = serializers.DateTimeField(allow_null=True)
+    id = serializers.ReadOnlyField()
+
+    def save(self, validated_data):
+        new_request = RequestedBookedDockChanges(
+            booked_dock=validated_data['booked_dock'],
+            dock_from=validated_data['dock_from'],
+            dock_to=validated_data['dock_to'],
+            new_start_date=validated_data['new_start_date'],
+            new_end_date=validated_data['new_end_date'],
+            old_start_date=validated_data['old_start_date'],
+            old_end_date=validated_data['old_end_date'],
+        )
+        new_request.save()
+        return new_request
+
+    def validate(self, attrs):
+        if attrs['dock_from'] is None or attrs['dock_to'] is None:
+            if attrs['new_start_date'] is None and attrs['new_end_date'] is None:
+                raise serializers.ValidationError({'detail': 'dock change or date change required'})
+            elif attrs['old_end_date'] is None or attrs['old_start_date'] is None:
+                raise serializers.ValidationError({'detail': 'old_end_date and old_start_date is required'})
+
+        if attrs['new_start_date'] is None or attrs['new_end_date'] is None:
+            if attrs['dock_from'] is None and attrs['dock_to'] is None:
+                raise serializers.ValidationError({'detail': 'dock change or date change required'})
+
+        return attrs
+
+    class Meta:
+        model = RequestedBookedDockChanges
+        fields = [
+            'id',
+            'booked_dock',
+            'dock_from',
+            'dock_to',
+            'new_start_date',
+            'new_end_date',
+            'old_start_date',
+            'old_end_date',
+        ]
+
+
+class RequestedBookedDockChangesUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestedBookedDockChanges
+        fields = [
+            'accepted'
+        ]
+
+
+class RequestedBookedDockChangesGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RequestedBookedDockChanges
+        fields = [
+            'id',
+            'booked_dock',
+            'accepted',
+            'dock_from',
+            'dock_to',
+            'new_start_date',
+            'new_end_date',
+            'old_start_date',
+            'old_end_date',
+        ]
+
+
+class WarehouseAdminNotificationsCreateSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = WarehouseAdminNotifications
+        fields = [
+            'id',
+            'seen',
+        ]
+
+
+class WarehouseAdminNotificationsGetSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = WarehouseAdminNotifications
+        fields = [
+            'id',
+            'seen',
+            'text',
+            'user',
+        ]

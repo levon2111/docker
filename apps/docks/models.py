@@ -59,6 +59,7 @@ class Dock(AbstractBaseModel):
 class BookedDock(AbstractBaseModel):
     dock = models.ForeignKey(Dock, on_delete=models.CASCADE)
 
+    user = models.IntegerField(null=False, blank=False)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     po_number = models.CharField(max_length=255, null=False, blank=False)
@@ -92,3 +93,47 @@ class InvitationToUserAndWarehouseAdmin(AbstractBaseModel):
 
     class Meta:
         verbose_name_plural = 'Invitation To User And Warehouse Admin'
+
+
+class RequestedBookedDockChanges(AbstractBaseModel):
+    booked_dock = models.ForeignKey(BookedDock, on_delete=models.CASCADE)
+
+    dock_from = models.ForeignKey(Dock, related_name="from_dock", on_delete=models.CASCADE, null=True, blank=True)
+    dock_to = models.ForeignKey(Dock, related_name="to_dock", on_delete=models.CASCADE, null=True, blank=True)
+
+    new_start_date = models.DateTimeField(null=True, blank=True)
+    new_end_date = models.DateTimeField(null=True, blank=True)
+
+    old_start_date = models.DateTimeField(null=True, blank=True)
+    old_end_date = models.DateTimeField(null=True, blank=True)
+    accepted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "Requested Book changes: ID  %s" % self.pk
+
+    class Meta:
+        verbose_name_plural = 'Requested Book changes'
+
+
+class WarehouseAdminNotifications(AbstractBaseModel):
+    user = models.IntegerField(null=False, blank=False)
+    text = models.TextField(null=False)
+    seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name_plural = 'Warehouse Admin Notifications'
+
+
+class CompanyUserNotifications(AbstractBaseModel):
+    user = models.IntegerField(null=False, blank=False)
+    text = models.TextField(null=False)
+    seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name_plural = 'Company User Notifications'

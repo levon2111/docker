@@ -6,11 +6,14 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from apps.docks.filters import WarehouseFilter, BookedDockFilter
-from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company, BookedDock
+from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company, BookedDock, \
+    RequestedBookedDockChanges, WarehouseAdminNotifications
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
     CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer, CompanySerializer, \
-    BookedDockCreateSerializer, BookedDockGetSerializer
-from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser
+    BookedDockCreateSerializer, BookedDockGetSerializer, RequestedBookedDockChangesSerializer, \
+    RequestedBookedDockChangesGetSerializer, WarehouseAdminNotificationsCreateSerializer, \
+    WarehouseAdminNotificationsGetSerializer, RequestedBookedDockChangesUpdateSerializer
+from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser, WarehouseManager
 
 
 def get_user_company(user):
@@ -114,6 +117,30 @@ class CreateWarehouseAPIView(APIView):
         return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class RequestedBookedDockChangesAPIView(APIView):
+    serializer_class = RequestedBookedDockChangesSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_serializer(self):
+        return self.serializer_class()
+
+    def post(self, request):
+        company = get_user_company(request.user)
+        if company is not None:
+            serializer = self.serializer_class(data=request.data, context={'company': company, 'user': request.user})
+            if serializer.is_valid():
+                new_request = serializer.save(serializer.data)
+                return JsonResponse(
+                    {
+                        'result': RequestedBookedDockChangesGetSerializer(new_request).data,
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class DockModelViewSet(viewsets.ModelViewSet):
     queryset = Dock.objects.all()
     serializer_class = DockModelSerializer
@@ -139,12 +166,26 @@ class CompanyModelViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'put', 'patch')
 
 
+class RequestedBookedDockChangesModelViewSet(viewsets.ModelViewSet):
+    queryset = RequestedBookedDockChanges.objects.all()
+    serializer_class = RequestedBookedDockChangesUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ('put', 'patch')
+
+
 class BookedDockViewSet(viewsets.ModelViewSet):
     queryset = BookedDock.objects.all()
     serializer_class = BookedDockCreateSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ('get', 'post', 'delete', 'put', 'patch')
+    http_method_names = ('get', 'post', 'delete')
     filter_class = BookedDockFilter
+
+    def get_serializer_context(self):
+        context = super(BookedDockViewSet, self).get_serializer_context()
+        context.update({
+            "user": self.request.user
+        })
+        return context
 
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'GET':
@@ -159,3 +200,39 @@ class BookedDockViewSet(viewsets.ModelViewSet):
         if company is not None:
             return BookedDock.objects.filter(dock__warehouse__company=company)
         return BookedDock.objects.all()
+
+
+class WarehouseAdminNotificationsViewSet(viewsets.ModelViewSet):
+    queryset = WarehouseAdminNotifications.objects.all()
+    serializer_class = WarehouseAdminNotificationsCreateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ('put', 'patch',)
+
+
+class GetWarehouseAdminNotificationsAPIView(APIView):
+    permission_classes = [IsAuthenticated, ]
+
+    def get(self, request):
+        if self.request.user.role != 'warehouse':
+            company = get_user_company(self.request.user)
+            warehouse_manager_with_warehouse = WarehouseManager.objects.filter(admin__user=self.request.user)
+            user_warehouses = [x.warehouse for x in warehouse_manager_with_warehouse]
+            request_to_change = RequestedBookedDockChanges.objects.filter(accepted=False,
+                                                                          booked_dock__dock__warehouse__in=user_warehouses)
+            request_to_change = RequestedBookedDockChangesGetSerializer(request_to_change, many=True).data
+            notif = WarehouseAdminNotifications.objects.filter(seen=False, user=self.request.user.id)
+            notif = WarehouseAdminNotificationsGetSerializer(notif, many=True).data
+
+            if company is not None:
+                return JsonResponse(
+                    {
+                        'result': {
+                            'request_to_change': request_to_change,
+                            'notifications': notif,
+                        },
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
+            return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Warehouse User not found'}, status=status.HTTP_400_BAD_REQUEST)

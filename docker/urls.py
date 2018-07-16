@@ -7,7 +7,9 @@ from rest_framework_swagger.views import get_swagger_view
 
 from apps.core.urls import generate_url
 from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet, \
-    InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView, CompanyModelViewSet, BookedDockViewSet
+    InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView, CompanyModelViewSet, BookedDockViewSet, \
+    RequestedBookedDockChangesAPIView, WarehouseAdminNotificationsViewSet, RequestedBookedDockChangesModelViewSet, \
+    GetWarehouseAdminNotificationsAPIView
 from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet, GetCompanyUsersAPIView, \
     CompanyUserViewSet, UserViewSet, CompanyAdminsNotificationViewSet
 
@@ -23,6 +25,10 @@ router.register(r'users', UserViewSet, base_name='users')
 router.register(r'company', CompanyModelViewSet, base_name='company')
 router.register(r'booked-dock', BookedDockViewSet, base_name='booked-dock')
 router.register(r'company-admin-notification', CompanyAdminsNotificationViewSet, base_name='company-admin-notification')
+router.register(r'update-booked-dock-change', RequestedBookedDockChangesModelViewSet,
+                base_name='update-booked-dock-change')
+router.register(r'warehouse-admin-notification', WarehouseAdminNotificationsViewSet,
+                base_name='warehouse-admin-notification')
 
 urlpatterns = [
     url(r'^$', schema_view),
@@ -35,6 +41,9 @@ urlpatterns = [
         name='invite-user-warehouse'),
     url(r'accept-invitations/(?P<token>\w+)/$', AcceptInvitationAPIView.as_view(), name='accept-invitations'),
     url(r'get-company-all-users/', GetCompanyUsersAPIView.as_view(), name='get-company-all-users'),
+    url(r'get-warehouse-admin-notifications/', GetWarehouseAdminNotificationsAPIView.as_view(),
+        name='get-warehouse-admin-notifications'),
+    url(r'booked-dock-change/', RequestedBookedDockChangesAPIView.as_view(), name='booked-dock-change'),
     url(r'^admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
