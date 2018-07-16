@@ -4,7 +4,7 @@ from rest_framework import serializers
 from apps.core.serializer_fields import Base64ImageField
 from apps.core.utils import send_email_job_registration, generate_unique_key
 from apps.docks.models import Warehouse, Company, InvitationToUserAndWarehouseAdmin, Dock, BookedDock, \
-    RequestedBookedDockChanges, WarehouseAdminNotifications
+    RequestedBookedDockChanges, WarehouseAdminNotifications, CompanyUserNotifications
 from apps.users.models import User, CompanyWarehouseAdmins, WarehouseManager
 
 
@@ -398,6 +398,17 @@ class WarehouseAdminNotificationsCreateSerializer(serializers.ModelSerializer):
         ]
 
 
+class CompanyUserNotificationsUpdateSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CompanyUserNotifications
+        fields = [
+            'id',
+            'seen',
+        ]
+
+
 class WarehouseAdminNotificationsGetSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
 
@@ -407,5 +418,16 @@ class WarehouseAdminNotificationsGetSerializer(serializers.ModelSerializer):
             'id',
             'seen',
             'text',
-            'user',
+        ]
+
+
+class CompanyUserNotificationsGetSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
+    class Meta:
+        model = CompanyUserNotifications
+        fields = [
+            'id',
+            'seen',
+            'text',
         ]

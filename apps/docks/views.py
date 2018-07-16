@@ -7,12 +7,13 @@ from rest_framework.views import APIView
 
 from apps.docks.filters import WarehouseFilter, BookedDockFilter
 from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Dock, Company, BookedDock, \
-    RequestedBookedDockChanges, WarehouseAdminNotifications
+    RequestedBookedDockChanges, WarehouseAdminNotifications, CompanyUserNotifications
 from apps.docks.serializers import WarehouseGetSerializer, InviteUserOrWarehouseAdminSerializer, CompanyGetSerializer, \
     CreateWarehouseSerializer, WarehousePostSerializer, DockModelSerializer, CompanySerializer, \
     BookedDockCreateSerializer, BookedDockGetSerializer, RequestedBookedDockChangesSerializer, \
     RequestedBookedDockChangesGetSerializer, WarehouseAdminNotificationsCreateSerializer, \
-    WarehouseAdminNotificationsGetSerializer, RequestedBookedDockChangesUpdateSerializer
+    WarehouseAdminNotificationsGetSerializer, RequestedBookedDockChangesUpdateSerializer, \
+    CompanyUserNotificationsUpdateSerializer, CompanyUserNotificationsGetSerializer
 from apps.users.models import CompanyAdmins, CompanyWarehouseAdmins, CompanyUser, WarehouseManager
 
 
@@ -62,7 +63,8 @@ class InviteUserOrWarehouseAdminAPIView(APIView):
 
             company = get_user_company(request.user)
             if company is not None:
-                serializer = self.serializer_class(data=request.data, context={'company': company, 'user': request.user})
+                serializer = self.serializer_class(data=request.data,
+                                                   context={'company': company, 'user': request.user})
 
                 if serializer.is_valid():
                     serializer.send_mail(serializer.data)
@@ -173,6 +175,26 @@ class RequestedBookedDockChangesModelViewSet(viewsets.ModelViewSet):
     serializer_class = RequestedBookedDockChangesUpdateSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ('put', 'patch')
+
+
+class CompanyUserNotificationsModelViewSet(viewsets.ModelViewSet):
+    queryset = CompanyUserNotifications.objects.all()
+    serializer_class = CompanyUserNotificationsUpdateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ('put', 'patch', 'get',)
+
+    def get_queryset(self):
+        if self.request.user is not None:
+            return CompanyUserNotifications.objects.filter(user=self.request.user.pk)
+        return CompanyUserNotifications.objects.all()
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'GET':
+            serializer_class = CompanyUserNotificationsGetSerializer
+        else:
+            serializer_class = CompanyUserNotificationsUpdateSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
 
 
 class BookedDockViewSet(viewsets.ModelViewSet):
