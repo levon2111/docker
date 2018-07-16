@@ -284,9 +284,12 @@ class CompanyAdminsNotificationPostSerializer(serializers.Serializer):
 
 
 class UserPostSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = User
         fields = [
+            'id',
             'first_name',
             'last_name',
             'username',
