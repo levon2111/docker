@@ -9,11 +9,13 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from apps.users.filters import WarehouseAdminFilter, WarehouseManagerFilter
-from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser, WarehouseManager
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyAdmins, CompanyUser, WarehouseManager, \
+    CompanyAdminsNotification
 from apps.users.serializers import (
     ForgotPasswordSerializer, ConfirmAccountSerializer, ResetPasswordSerializer, SignUpSerializer,
     WarehouseAdminGetSerializer, WarehouseManagerSerializer, GetCompanyAllUserSerializer, WarehouseAdminPostSerilizer,
-    CompanyUserPostSerializer, CompanyUserGetSerializer, UserPostSerializer, ChangePasswordSerializer)
+    CompanyUserPostSerializer, CompanyUserGetSerializer, UserPostSerializer, ChangePasswordSerializer,
+    CompanyAdminsNotificationPostSerializer)
 
 
 def get_user_company(user):
@@ -255,3 +257,25 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response("Success.", status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompanyAdminsNotificationViewSet(viewsets.ModelViewSet):
+    def get_queryset(self):
+        company = get_user_company(self.request.user)
+        if company is not None:
+            return CompanyAdminsNotification.objects.filter(company=company, seen=False)
+        return CompanyAdminsNotification.objects.all()
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'GET':
+            serializer_class = CompanyAdminsNotificationPostSerializer
+        else:
+            serializer_class = CompanyAdminsNotificationPostSerializer
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
+
+    queryset = CompanyAdminsNotification.objects.all()
+    permission_classes = [IsAuthenticated, ]
+    http_method_names = ('put', 'patch', 'get',)
+    serializer_class = CompanyAdminsNotificationPostSerializer
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)

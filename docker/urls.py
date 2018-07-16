@@ -9,7 +9,7 @@ from apps.core.urls import generate_url
 from apps.docks.views import CompanyWarehouseViewSet, CreateWarehouseAPIView, DockModelViewSet, \
     InviteUserOrWarehouseAdminAPIView, AcceptInvitationAPIView, CompanyModelViewSet, BookedDockViewSet
 from apps.users.views import WarehouseManagerViewSet, CompanyWarehouseAdminViewSet, GetCompanyUsersAPIView, \
-    CompanyUserViewSet, UserViewSet
+    CompanyUserViewSet, UserViewSet, CompanyAdminsNotificationViewSet
 
 schema_view = get_swagger_view(title='Docker API')
 
@@ -22,6 +22,7 @@ router.register(r'dock', DockModelViewSet, base_name='dock')
 router.register(r'users', UserViewSet, base_name='users')
 router.register(r'company', CompanyModelViewSet, base_name='company')
 router.register(r'booked-dock', BookedDockViewSet, base_name='booked-dock')
+router.register(r'company-admin-notification', CompanyAdminsNotificationViewSet, base_name='company-admin-notification')
 
 urlpatterns = [
     url(r'^$', schema_view),

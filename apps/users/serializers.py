@@ -6,7 +6,7 @@ from rest_framework import serializers
 from apps.core.utils import generate_unique_key, send_email_job_registration
 from apps.docks.models import Warehouse, InvitationToUserAndWarehouseAdmin, Company
 from apps.docks.serializers import CompanyGetSerializer
-from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser, WarehouseManager
+from apps.users.models import User, CompanyWarehouseAdmins, CompanyUser, WarehouseManager, CompanyAdminsNotification
 from apps.users.validators import check_valid_password
 
 
@@ -132,6 +132,10 @@ class SignUpSerializer(serializers.Serializer):
             elif user.role == 'warehouse':
                 warehouse_admin = CompanyWarehouseAdmins(user=user, company=invitation.company)
                 warehouse_admin.save()
+            msg = "%s %s (%s) accepted your invitation." % (
+                invitation.first_name, invitation.first_name, invitation.role)
+            notification = CompanyAdminsNotification(company=invitation.company, text=msg)
+            notification.save()
             InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).delete()
         else:
             raise serializers.ValidationError({'detail': 'Invalid email'})
@@ -262,6 +266,20 @@ class CompanyUserPostSerializer(serializers.Serializer):
             'id',
             'user',
             'company',
+        ]
+
+
+class CompanyAdminsNotificationPostSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    text = serializers.CharField(allow_null=False)
+    seen = serializers.BooleanField()
+
+    class Meta:
+        model = CompanyAdminsNotification
+        fields = [
+            'id',
+            'text',
+            'seen',
         ]
 
 
