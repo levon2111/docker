@@ -324,9 +324,9 @@ class RequestedBookedDockChangesSerializer(serializers.ModelSerializer):
 
     def save(self, validated_data):
         new_request = RequestedBookedDockChanges(
-            booked_dock=validated_data['booked_dock'],
-            dock_from=validated_data['dock_from'],
-            dock_to=validated_data['dock_to'],
+            booked_dock=BookedDock.objects.filter(pk=validated_data['booked_dock']).first(),
+            dock_from=Dock.objects.filter(pk=validated_data['dock_from']).first(),
+            dock_to=Dock.objects.filter(pk=validated_data['dock_to']).first(),
             new_start_date=validated_data['new_start_date'],
             new_end_date=validated_data['new_end_date'],
             old_start_date=validated_data['old_start_date'],
