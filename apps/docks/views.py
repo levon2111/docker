@@ -176,6 +176,13 @@ class RequestedBookedDockChangesModelViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ('put', 'patch')
 
+    def get_serializer_context(self):
+        context = super(RequestedBookedDockChangesModelViewSet, self).get_serializer_context()
+        context.update({
+            "user": self.request.user
+        })
+        return context
+
 
 class CompanyUserNotificationsModelViewSet(viewsets.ModelViewSet):
     queryset = CompanyUserNotifications.objects.all()

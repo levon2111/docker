@@ -364,6 +364,18 @@ class RequestedBookedDockChangesSerializer(serializers.ModelSerializer):
 
 
 class RequestedBookedDockChangesUpdateSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        instance.accepted = validated_data['accepted']
+        instance.save()
+        msg = "%s accepted you request." % self.context['user']
+        notif = CompanyUserNotifications(
+            user=self.context['user'].id,
+            text=msg,
+            seen=False
+        )
+        notif.save()
+        return instance
+
     class Meta:
         model = RequestedBookedDockChanges
         fields = [
