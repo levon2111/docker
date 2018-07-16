@@ -244,7 +244,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserPostSerializer
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES)
 
-    @action(methods=['patch'], detail=True, permission_classes=[],
+    @action(methods=['patch'], detail=True, permission_classes=[IsAuthenticated],
             serializer_class=ChangePasswordSerializer)
     def change_password(self, request, pk=None):
         user = self.get_object()

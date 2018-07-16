@@ -58,20 +58,22 @@ class InviteUserOrWarehouseAdminAPIView(APIView):
         return self.serializer_class()
 
     def post(self, request):
-        company = get_user_company(request.user)
-        if company is not None:
-            serializer = self.serializer_class(data=request.data, context={'company': company})
+        if request.user.is_authenticated:
 
-            if serializer.is_valid():
-                serializer.send_mail(serializer.data)
-                return JsonResponse(
-                    {
-                        'result': 'success',
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
+            company = get_user_company(request.user)
+            if company is not None:
+                serializer = self.serializer_class(data=request.data, context={'company': company})
 
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if serializer.is_valid():
+                    serializer.send_mail(serializer.data)
+                    return JsonResponse(
+                        {
+                            'result': 'success',
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'Company not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -213,7 +215,7 @@ class GetWarehouseAdminNotificationsAPIView(APIView):
     permission_classes = [IsAuthenticated, ]
 
     def get(self, request):
-        if self.request.user.role != 'warehouse':
+        if self.request.user.role == 'warehouse':
             company = get_user_company(self.request.user)
             warehouse_manager_with_warehouse = WarehouseManager.objects.filter(admin__user=self.request.user)
             user_warehouses = [x.warehouse for x in warehouse_manager_with_warehouse]
