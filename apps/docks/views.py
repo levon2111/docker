@@ -83,6 +83,8 @@ class AcceptInvitationAPIView(APIView):
     def post(self, request, token):
         invitation = InvitationToUserAndWarehouseAdmin.objects.filter(token=token).first()
         if invitation is not None:
+            invitation.accepted = True
+            invitation.save()
             return JsonResponse(
                 {
                     'message': 'Valid Token',

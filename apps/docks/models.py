@@ -85,6 +85,7 @@ class InvitationToUserAndWarehouseAdmin(AbstractBaseModel):
     role = models.CharField(choices=ROLE_CHOICES, max_length=32, default='company')
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     user = models.IntegerField(null=False, blank=False)
+    accepted = models.BooleanField(default=False)
 
     def get_full_name(self):
         return '%s %s' % (self.first_name, self.last_name)

@@ -117,31 +117,34 @@ class SignUpSerializer(serializers.Serializer):
     def save_user(validated_data):
         invitation = InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).first()
         if invitation is not None:
-            user = User(email=validated_data['email'])
-            user.set_password(validated_data['password'])
-            user.first_name = invitation.first_name
-            user.last_name = invitation.last_name
-            user.is_staff = False
-            user.is_active = True
-            user.role = invitation.role
-            user.email_confirmation_token = generate_unique_key(user.email)
-            user.save()
-            if user.role == 'general':
-                company_general_user = CompanyUser(user=user, company=invitation.company)
-                company_general_user.save()
-            elif user.role == 'warehouse':
-                warehouse_admin = CompanyWarehouseAdmins(user=user, company=invitation.company)
-                warehouse_admin.save()
-            msg = "%s %s (%s) accepted your invitation." % (
-                invitation.first_name, invitation.first_name, invitation.role)
-            from_invited_user = User.objects.filter(pk=invitation.user).first()
-            print(from_invited_user)
-            if from_invited_user.role == 'warehouse':
-                notif = WarehouseAdminNotifications(user=from_invited_user.id, text=msg, seen=False)
-                notif.save()
-            notification = CompanyAdminsNotification(company=invitation.company, text=msg)
-            notification.save()
-            InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).delete()
+            if invitation.accepted:
+                user = User(email=validated_data['email'])
+                user.set_password(validated_data['password'])
+                user.first_name = invitation.first_name
+                user.last_name = invitation.last_name
+                user.is_staff = False
+                user.is_active = True
+                user.role = invitation.role
+                user.email_confirmation_token = generate_unique_key(user.email)
+                user.save()
+                if user.role == 'general':
+                    company_general_user = CompanyUser(user=user, company=invitation.company)
+                    company_general_user.save()
+                elif user.role == 'warehouse':
+                    warehouse_admin = CompanyWarehouseAdmins(user=user, company=invitation.company)
+                    warehouse_admin.save()
+                msg = "%s %s (%s) accepted your invitation." % (
+                    invitation.first_name, invitation.first_name, invitation.role)
+                from_invited_user = User.objects.filter(pk=invitation.user).first()
+                print(from_invited_user)
+                if from_invited_user.role == 'warehouse':
+                    notif = WarehouseAdminNotifications(user=from_invited_user.id, text=msg, seen=False)
+                    notif.save()
+                notification = CompanyAdminsNotification(company=invitation.company, text=msg)
+                notification.save()
+                InvitationToUserAndWarehouseAdmin.objects.filter(email=validated_data['email']).delete()
+            else:
+                raise serializers.ValidationError({'detail': 'Account not accepted.'})
         else:
             raise serializers.ValidationError({'detail': 'Invalid email'})
 
